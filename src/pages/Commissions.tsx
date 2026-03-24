@@ -34,7 +34,7 @@ interface Policy { id: string; policy_number: string; premium_amount: number; }
 
 const emptyForm = {
   intermediary_id: "", insurer_id: "", policy_id: "",
-  premium_amount: "", commission_rate: "", status: "pending" as const,
+  premium_amount: "", commission_rate: "", status: "pending" as "pending" | "paid" | "cancelled",
 };
 
 const Commissions = () => {
