@@ -14,16 +14,473 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clients: {
+        Row: {
+          address: string | null
+          created_at: string
+          date_of_birth: string | null
+          email: string | null
+          full_name: string
+          id: string
+          intermediary_id: string
+          is_active: boolean
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          intermediary_id: string
+          is_active?: boolean
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          intermediary_id?: string
+          is_active?: boolean
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_intermediary_id_fkey"
+            columns: ["intermediary_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commissions: {
+        Row: {
+          commission_amount: number
+          commission_rate: number
+          created_at: string
+          id: string
+          insurer_id: string | null
+          intermediary_id: string
+          policy_id: string | null
+          premium_amount: number
+          status: Database["public"]["Enums"]["commission_status"]
+          updated_at: string
+        }
+        Insert: {
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          insurer_id?: string | null
+          intermediary_id: string
+          policy_id?: string | null
+          premium_amount?: number
+          status?: Database["public"]["Enums"]["commission_status"]
+          updated_at?: string
+        }
+        Update: {
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          insurer_id?: string | null
+          intermediary_id?: string
+          policy_id?: string | null
+          premium_amount?: number
+          status?: Database["public"]["Enums"]["commission_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commissions_insurer_id_fkey"
+            columns: ["insurer_id"]
+            isOneToOne: false
+            referencedRelation: "insurers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_intermediary_id_fkey"
+            columns: ["intermediary_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commissions_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      insurers: {
+        Row: {
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      intermediary_insurers: {
+        Row: {
+          created_at: string
+          id: string
+          insurer_id: string
+          intermediary_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          insurer_id: string
+          intermediary_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          insurer_id?: string
+          intermediary_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intermediary_insurers_insurer_id_fkey"
+            columns: ["insurer_id"]
+            isOneToOne: false
+            referencedRelation: "insurers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intermediary_insurers_intermediary_id_fkey"
+            columns: ["intermediary_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          assigned_intermediary_id: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          insurance_type_interest: string | null
+          message: string | null
+          phone: string | null
+          source: string | null
+          status: Database["public"]["Enums"]["lead_status"]
+          updated_at: string
+        }
+        Insert: {
+          assigned_intermediary_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          insurance_type_interest?: string | null
+          message?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
+          updated_at?: string
+        }
+        Update: {
+          assigned_intermediary_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          insurance_type_interest?: string | null
+          message?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_assigned_intermediary_id_fkey"
+            columns: ["assigned_intermediary_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      policies: {
+        Row: {
+          client_id: string
+          coverage_amount: number | null
+          created_at: string
+          end_date: string
+          id: string
+          insurer_id: string | null
+          intermediary_id: string
+          ocr_extracted_data: Json | null
+          original_document_url: string | null
+          policy_number: string
+          policy_type: string
+          premium_amount: number
+          renewal_status: Database["public"]["Enums"]["renewal_status"]
+          renewed_from_policy_id: string | null
+          start_date: string
+          status: Database["public"]["Enums"]["policy_status"]
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          coverage_amount?: number | null
+          created_at?: string
+          end_date: string
+          id?: string
+          insurer_id?: string | null
+          intermediary_id: string
+          ocr_extracted_data?: Json | null
+          original_document_url?: string | null
+          policy_number: string
+          policy_type?: string
+          premium_amount?: number
+          renewal_status?: Database["public"]["Enums"]["renewal_status"]
+          renewed_from_policy_id?: string | null
+          start_date: string
+          status?: Database["public"]["Enums"]["policy_status"]
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          coverage_amount?: number | null
+          created_at?: string
+          end_date?: string
+          id?: string
+          insurer_id?: string | null
+          intermediary_id?: string
+          ocr_extracted_data?: Json | null
+          original_document_url?: string | null
+          policy_number?: string
+          policy_type?: string
+          premium_amount?: number
+          renewal_status?: Database["public"]["Enums"]["renewal_status"]
+          renewed_from_policy_id?: string | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["policy_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policies_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policies_insurer_id_fkey"
+            columns: ["insurer_id"]
+            isOneToOne: false
+            referencedRelation: "insurers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policies_intermediary_id_fkey"
+            columns: ["intermediary_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "policies_renewed_from_policy_id_fkey"
+            columns: ["renewed_from_policy_id"]
+            isOneToOne: false
+            referencedRelation: "policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          parent_intermediary_id: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          parent_intermediary_id?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          parent_intermediary_id?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_parent_intermediary_id_fkey"
+            columns: ["parent_intermediary_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotations: {
+        Row: {
+          alert_count: number
+          amount: number | null
+          client_id: string
+          created_at: string
+          id: string
+          intermediary_id: string
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          policy_id: string | null
+          sent_at: string | null
+          sent_via: string | null
+          updated_at: string
+        }
+        Insert: {
+          alert_count?: number
+          amount?: number | null
+          client_id: string
+          created_at?: string
+          id?: string
+          intermediary_id: string
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          policy_id?: string | null
+          sent_at?: string | null
+          sent_via?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alert_count?: number
+          amount?: number | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          intermediary_id?: string
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          policy_id?: string | null
+          sent_at?: string | null
+          sent_via?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotations_intermediary_id_fkey"
+            columns: ["intermediary_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotations_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_profile_id: { Args: { _user_id: string }; Returns: string }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "super_admin" | "intermediary" | "staff"
+      commission_status: "pending" | "paid" | "cancelled"
+      lead_status: "new" | "contacted" | "in_discussion" | "converted" | "lost"
+      payment_status: "pending" | "paid" | "expired" | "cancelled"
+      policy_status: "active" | "expiring" | "expired" | "cancelled"
+      renewal_status: "upcoming" | "reminder_sent" | "renewed" | "lapsed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +607,13 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["super_admin", "intermediary", "staff"],
+      commission_status: ["pending", "paid", "cancelled"],
+      lead_status: ["new", "contacted", "in_discussion", "converted", "lost"],
+      payment_status: ["pending", "paid", "expired", "cancelled"],
+      policy_status: ["active", "expiring", "expired", "cancelled"],
+      renewal_status: ["upcoming", "reminder_sent", "renewed", "lapsed"],
+    },
   },
 } as const
