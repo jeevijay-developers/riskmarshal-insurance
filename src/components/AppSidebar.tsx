@@ -13,7 +13,8 @@ import {
   LogOut,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar,
   SidebarContent,
@@ -48,11 +49,17 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const navigate = useNavigate();
+  const { role, user, signOut } = useAuth();
   const isActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
 
-  // TODO: Replace with real role check from auth
-  const isAdmin = true;
+  const isAdmin = role === "super_admin";
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -136,9 +143,19 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-3">
+        {!collapsed && user && (
+          <div className="px-2 pb-2">
+            <p className="text-xs font-medium text-sidebar-foreground truncate">{user.email}</p>
+            <p className="text-[10px] text-sidebar-foreground/50 capitalize">{role || "loading..."}</p>
+          </div>
+        )}
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Logout" className="text-sidebar-foreground/60 hover:text-destructive">
+            <SidebarMenuButton
+              tooltip="Logout"
+              className="text-sidebar-foreground/60 hover:text-destructive"
+              onClick={handleLogout}
+            >
               <LogOut className="h-4 w-4" />
               {!collapsed && <span>Logout</span>}
             </SidebarMenuButton>

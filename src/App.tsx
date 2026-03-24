@@ -3,7 +3,10 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
+import Login from "./pages/Login";
 import Clients from "./pages/Clients";
 import Policies from "./pages/Policies";
 import Quotations from "./pages/Quotations";
@@ -19,25 +22,28 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/clients" element={<Clients />} />
-          <Route path="/policies" element={<Policies />} />
-          <Route path="/quotations" element={<Quotations />} />
-          <Route path="/renewals" element={<Renewals />} />
-          <Route path="/leads" element={<Leads />} />
-          <Route path="/insurers" element={<Insurers />} />
-          <Route path="/commissions" element={<Commissions />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
+            <Route path="/policies" element={<ProtectedRoute><Policies /></ProtectedRoute>} />
+            <Route path="/quotations" element={<ProtectedRoute><Quotations /></ProtectedRoute>} />
+            <Route path="/renewals" element={<ProtectedRoute><Renewals /></ProtectedRoute>} />
+            <Route path="/leads" element={<ProtectedRoute><Leads /></ProtectedRoute>} />
+            <Route path="/insurers" element={<ProtectedRoute allowedRoles={["super_admin"]}><Insurers /></ProtectedRoute>} />
+            <Route path="/commissions" element={<ProtectedRoute allowedRoles={["super_admin"]}><Commissions /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute allowedRoles={["super_admin"]}><Reports /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute allowedRoles={["super_admin"]}><SettingsPage /></ProtectedRoute>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
