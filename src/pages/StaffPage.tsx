@@ -208,17 +208,35 @@ const StaffPage = () => {
             <DialogDescription>Viewing user information</DialogDescription>
           </DialogHeader>
           {viewingUser && (
-            <div className="space-y-3 py-2">
-              <div><Label className="text-muted-foreground text-xs">Name</Label><p className="font-medium">{viewingUser.full_name || "—"}</p></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label className="text-muted-foreground text-xs">Email</Label><p>{viewingUser.email}</p></div>
-                <div><Label className="text-muted-foreground text-xs">Phone</Label><p>{viewingUser.phone || "—"}</p></div>
+            <div className="space-y-5 py-3">
+              <div className="space-y-1">
+                <Label className="text-muted-foreground text-xs">Name</Label>
+                <p className="font-medium text-base">{viewingUser.full_name || "—"}</p>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label className="text-muted-foreground text-xs">Role</Label><Badge variant="outline" className={roleColor[viewingUser.role || ""]}>{roleLabel[viewingUser.role || ""] || viewingUser.role}</Badge></div>
-                <div><Label className="text-muted-foreground text-xs">Status</Label><Badge variant="outline" className={viewingUser.is_active ? "bg-success/10 text-success border-success/30" : "bg-muted text-muted-foreground"}>{viewingUser.is_active ? "Active" : "Inactive"}</Badge></div>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Email</Label>
+                  <p className="text-sm">{viewingUser.email}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Phone</Label>
+                  <p className="text-sm">{viewingUser.phone || "—"}</p>
+                </div>
               </div>
-              <div><Label className="text-muted-foreground text-xs">Created</Label><p className="text-sm">{new Date(viewingUser.created_at).toLocaleDateString()}</p></div>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-1.5">
+                  <Label className="text-muted-foreground text-xs">Role</Label>
+                  <div><Badge variant="outline" className={roleColor[viewingUser.role || ""]}>{roleLabel[viewingUser.role || ""] || viewingUser.role}</Badge></div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-muted-foreground text-xs">Status</Label>
+                  <div><Badge variant="outline" className={viewingUser.is_active ? "bg-success/10 text-success border-success/30" : "bg-muted text-muted-foreground"}>{viewingUser.is_active ? "Active" : "Inactive"}</Badge></div>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-muted-foreground text-xs">Created</Label>
+                <p className="text-sm">{new Date(viewingUser.created_at).toLocaleDateString()}</p>
+              </div>
             </div>
           )}
         </DialogContent>
