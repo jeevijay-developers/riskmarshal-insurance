@@ -223,7 +223,7 @@ const SettingsPage = () => {
           )}
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 };
 
