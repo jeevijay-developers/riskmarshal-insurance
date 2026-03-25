@@ -23,7 +23,6 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Download the document from storage
     const { data: fileData, error: downloadError } = await supabase.storage
       .from("policy-documents")
       .download(documentPath);
@@ -34,12 +33,10 @@ serve(async (req) => {
       });
     }
 
-    // Convert to base64
     const arrayBuffer = await fileData.arrayBuffer();
     const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
     const mimeType = fileData.type || "application/pdf";
 
-    // Call Gemini API for OCR extraction
     const geminiResponse = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
       {
@@ -48,22 +45,121 @@ serve(async (req) => {
         body: JSON.stringify({
           contents: [{
             parts: [
+              { inlineData: { mimeType, data: base64 } },
               {
-                inlineData: { mimeType, data: base64 },
-              },
-              {
-                text: `Extract the following information from this insurance policy document and return ONLY valid JSON with these fields:
+                text: `You are an expert insurance document parser. Extract ALL available information from this insurance policy document and return ONLY valid JSON (no markdown, no code fences) with this exact structure. Use null for any field not found in the document.
+
 {
-  "policy_number": "string or null",
-  "client_name": "string or null",
-  "insurer_name": "string or null",
-  "policy_type": "string or null",
-  "premium_amount": "number or null",
-  "coverage_amount": "number or null",
-  "start_date": "YYYY-MM-DD or null",
-  "end_date": "YYYY-MM-DD or null",
-  "additional_details": "any other relevant info as string"
-}`,
+  "vehicleDetails": {
+    "manufacturer": "string or null",
+    "model": "string or null",
+    "variant": "string or null",
+    "registrationNumber": "string or null",
+    "engineNumber": "string or null",
+    "chassisNumber": "string or null",
+    "fuelType": "string or null",
+    "seatingCapacity": "number or null",
+    "cubicCapacity": "number or null",
+    "bodyType": "string or null",
+    "odometerReading": "number or null",
+    "yearOfManufacture": "number or null",
+    "color": "string or null"
+  },
+  "policyDetails": {
+    "policyNumber": "string or null",
+    "periodFrom": "YYYY-MM-DD or null",
+    "periodTo": "YYYY-MM-DD or null",
+    "insuranceStartDate": "YYYY-MM-DD or null",
+    "insuranceEndDate": "YYYY-MM-DD or null",
+    "invoiceNumber": "string or null",
+    "invoiceDate": "YYYY-MM-DD or null",
+    "customerId": "string or null",
+    "gstIn": "string or null",
+    "policyType": "string or null (e.g. Comprehensive, Third Party, Own Damage)",
+    "coverType": "string or null (e.g. Package, Standalone OD, Standalone TP)",
+    "paymentDetails": {
+      "mode": "string or null (Cheque/Online/Cash)",
+      "chequeNumber": "string or null",
+      "bankName": "string or null",
+      "transactionId": "string or null"
+    },
+    "previousPolicy": {
+      "insurer": "string or null",
+      "policyNumber": "string or null",
+      "validFrom": "YYYY-MM-DD or null",
+      "validTo": "YYYY-MM-DD or null"
+    }
+  },
+  "premiumDetails": {
+    "ownDamage": {
+      "basicOD": "number or null",
+      "addOnZeroDep": "number or null",
+      "addOnConsumables": "number or null",
+      "addOnRSA": "number or null",
+      "addOnEngineProtect": "number or null",
+      "addOnKeyReplace": "number or null",
+      "addOnNCBProtect": "number or null",
+      "addOnReturnToInvoice": "number or null",
+      "otherAddOns": "number or null",
+      "total": "number or null"
+    },
+    "liability": {
+      "basicTP": "number or null",
+      "paCoverOwnerDriver": "number or null",
+      "paCoverPassengers": "number or null",
+      "llForPaidDriver": "number or null",
+      "llEmployees": "number or null",
+      "otherLiability": "number or null",
+      "total": "number or null"
+    },
+    "netPremium": "number or null",
+    "gstAmount": "number or null",
+    "gstPercentage": "number or null",
+    "finalPremium": "number or null",
+    "compulsoryDeductible": "number or null",
+    "voluntaryDeductible": "number or null",
+    "ncbPercentage": "number or null",
+    "ncbDiscount": "number or null",
+    "totalDiscount": "number or null"
+  },
+  "clientDetails": {
+    "name": "string or null",
+    "address": "string or null",
+    "email": "string or null",
+    "phone": "string or null",
+    "gstIn": "string or null",
+    "panNumber": "string or null",
+    "aadharNumber": "string or null",
+    "dateOfBirth": "YYYY-MM-DD or null",
+    "nominee": {
+      "name": "string or null",
+      "relationship": "string or null",
+      "age": "number or null"
+    }
+  },
+  "insurerDetails": {
+    "name": "string or null",
+    "branchAddress": "string or null",
+    "helplineNumber": "string or null",
+    "email": "string or null",
+    "irdaRegNumber": "string or null"
+  },
+  "agentDetails": {
+    "name": "string or null",
+    "code": "string or null",
+    "contact": "string or null",
+    "licenseNumber": "string or null"
+  },
+  "additionalInfo": {
+    "limitationsLiability": "string or null",
+    "termsConditions": "string or null",
+    "specialConditions": "string or null",
+    "hypothecation": "string or null",
+    "qrCodeLink": "string or null"
+  }
+}
+
+IMPORTANT: Return ONLY the JSON object, no markdown formatting, no code blocks, no explanation text.`,
               },
             ],
           }],
@@ -82,7 +178,6 @@ serve(async (req) => {
     const geminiResult = await geminiResponse.json();
     const textContent = geminiResult.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-    // Parse JSON from response
     let extractedData;
     try {
       const jsonMatch = textContent.match(/\{[\s\S]*\}/);
@@ -91,7 +186,6 @@ serve(async (req) => {
       extractedData = { raw_text: textContent };
     }
 
-    // Store extracted data
     const { error: updateError } = await supabase
       .from("policies")
       .update({ ocr_extracted_data: extractedData })
