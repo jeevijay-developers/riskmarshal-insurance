@@ -471,6 +471,39 @@ export type Database = {
           },
         ]
       }
+      renewal_config: {
+        Row: {
+          client_email_template: string
+          cron_schedule: string
+          enabled: boolean
+          id: string
+          intermediary_email_template: string
+          reminder_windows: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          client_email_template?: string
+          cron_schedule?: string
+          enabled?: boolean
+          id?: string
+          intermediary_email_template?: string
+          reminder_windows?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          client_email_template?: string
+          cron_schedule?: string
+          enabled?: boolean
+          id?: string
+          intermediary_email_template?: string
+          reminder_windows?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
