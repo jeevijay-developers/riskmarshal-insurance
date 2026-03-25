@@ -147,8 +147,10 @@ const Commissions = () => {
 
   const formatCurrency = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 
+  useSetPageTitle("Commissions");
+
   return (
-    <DashboardLayout title="Commissions">
+    <>
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
