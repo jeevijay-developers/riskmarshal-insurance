@@ -1,45 +1,21 @@
 
 
-## Plan: Branding Fix, Quotation Flow & Polish
+## Plan: Update Title, Favicon & Default Theme
 
-### 1. Sidebar Branding — Logo Only, "RiskMarshall"
+### 1. Update Page Title & Meta Tags
+**File: `index.html`**
+- Change `<title>` to "RiskMarshall Insurance CRM"
+- Update `og:title`, `description`, and `og:description` meta tags accordingly
+- Remove the TODO comments
 
-**File: `src/components/AppSidebar.tsx`**
-- Remove the text block ("RiskMarshal" + "Insurance CRM") below the logo
-- When expanded, show only the logo (sized larger, e.g. `h-10`)
-- Update all `alt` text to "RiskMarshall" (double L)
+### 2. Set Favicon to Existing Logo
+- Copy `src/assets/logo_rmbg.png` to `public/favicon.png`
+- Add `<link rel="icon" href="/favicon.png" type="image/png">` to `index.html`
 
-**File: `src/pages/Login.tsx`**
-- Remove the `<h1>RiskMarshal</h1>` and `<p>Insurance CRM Platform</p>` text
-- Keep only the logo image, sized larger (e.g. `h-20`)
-- Update alt text to "RiskMarshall"
+### 3. Change Default Theme to Light
+**File: `src/contexts/ThemeContext.tsx`**
+- Change the fallback from `"dark"` to `"light"` on line 15
 
-### 2. "Send Quotation" After Policy Creation
-
-**File: `src/pages/Policies.tsx`**
-- After `handleSave` and `handleSaveExtracted` succeed, show a confirmation toast with an action button: "Send Quotation"
-- Clicking it navigates to `/quotations` with query params or opens a pre-filled quotation dialog
-- Alternatively, add a "Send Quotation" button in the success flow that auto-creates a quotation linked to the newly created policy (using the policy's `client_id`, `premium_amount`, and `intermediary_id`)
-
-### 3. Comprehensive Toast Notifications
-
-**File: `src/pages/Policies.tsx`**
-- Already has most toasts. Ensure:
-  - Upload success/failure toasts
-  - Extraction progress toasts (step transitions)
-  - Save success with "Send Quotation" action
-  - Delete success/failure
-
-### 4. Test & Verify Upload Flow
-
-This is a testing request -- I will use browser tools to log in, navigate to Policies, upload the provided PDF, and verify the extraction animation + review form + save flow work correctly.
-
-### Technical Details
-
-**Files to modify:**
-- `src/components/AppSidebar.tsx` — Remove text, logo-only header
-- `src/pages/Login.tsx` — Remove text, logo-only branding
-- `src/pages/Policies.tsx` — Add "Send Quotation" post-save flow, ensure toast notifications
-
-No DB migration needed.
+**Files to modify:** `index.html`, `src/contexts/ThemeContext.tsx`
+**Files to copy:** `src/assets/logo_rmbg.png` → `public/favicon.png`
 
