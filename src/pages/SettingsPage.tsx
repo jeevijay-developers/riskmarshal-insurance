@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { DashboardLayout } from "@/components/DashboardLayout";
+import { useSetPageTitle } from "@/contexts/PageTitleContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,8 +102,10 @@ const SettingsPage = () => {
     } finally { setSaving(false); }
   };
 
+  useSetPageTitle("Settings & User Management");
+
   return (
-    <DashboardLayout title="Settings & User Management">
+    <>
       <div className="space-y-6">
         <Card className="border-border/50">
           <CardHeader className="pb-3">
@@ -221,7 +223,7 @@ const SettingsPage = () => {
           )}
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 };
 

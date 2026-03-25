@@ -1,9 +1,11 @@
-import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { BarChart3 } from "lucide-react";
+import { useSetPageTitle } from "@/contexts/PageTitleContext";
 
-const Reports = () => (
-  <DashboardLayout title="Reports">
+const Reports = () => {
+  useSetPageTitle("Reports");
+
+  return (
     <div className="flex items-center justify-center min-h-[400px]">
       <Card className="border-border/50 max-w-md w-full">
         <CardContent className="flex flex-col items-center gap-4 p-10 text-center">
@@ -17,7 +19,7 @@ const Reports = () => (
         </CardContent>
       </Card>
     </div>
-  </DashboardLayout>
-);
+  );
+};
 
 export default Reports;

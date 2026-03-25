@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { DashboardLayout } from "@/components/DashboardLayout";
+import { useSetPageTitle } from "@/contexts/PageTitleContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -170,8 +170,10 @@ const Leads = () => {
 
   const getProfileName = (id: string | null) => profiles.find((p) => p.id === id)?.full_name || "—";
 
+  useSetPageTitle("Leads");
+
   return (
-    <DashboardLayout title="Leads">
+    <>
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
@@ -384,7 +386,7 @@ const Leads = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </DashboardLayout>
+    </>
   );
 };
 

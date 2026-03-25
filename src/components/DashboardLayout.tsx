@@ -3,14 +3,12 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Bell, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
+import { usePageTitle, PageTitleProvider } from "@/contexts/PageTitleContext";
+import { Outlet } from "react-router-dom";
 
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-  title?: string;
-}
-
-export function DashboardLayout({ children, title }: DashboardLayoutProps) {
+function DashboardLayoutInner() {
   const { theme, toggleTheme } = useTheme();
+  const title = usePageTitle();
 
   return (
     <SidebarProvider>
@@ -40,10 +38,18 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
             </div>
           </header>
           <main className="flex-1 p-6 overflow-auto">
-            {children}
+            <Outlet />
           </main>
         </div>
       </div>
     </SidebarProvider>
+  );
+}
+
+export function DashboardLayout() {
+  return (
+    <PageTitleProvider>
+      <DashboardLayoutInner />
+    </PageTitleProvider>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { DashboardLayout } from "@/components/DashboardLayout";
+import { useSetPageTitle } from "@/contexts/PageTitleContext";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { RenewalWidget } from "@/components/dashboard/RenewalWidget";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
@@ -67,9 +67,10 @@ const Index = () => {
     return `₹${amount.toLocaleString("en-IN")}`;
   };
 
+  useSetPageTitle("Dashboard");
+
   return (
-    <DashboardLayout title="Dashboard">
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <StatCard
             title="Active Policies"
@@ -109,9 +110,8 @@ const Index = () => {
           <RenewalWidget />
         </div>
 
-        {isAdmin && <IntermediaryTable />}
-      </div>
-    </DashboardLayout>
+      {isAdmin && <IntermediaryTable />}
+    </div>
   );
 };
 
