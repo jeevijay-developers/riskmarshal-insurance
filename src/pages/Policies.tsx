@@ -338,7 +338,12 @@ const Policies = () => {
       }).eq("id", reviewFormData._policyId);
 
       if (error) throw error;
-      toast.success("Policy saved from extracted data");
+      toast.success("Policy saved from extracted data", {
+        action: {
+          label: "Send Quotation",
+          onClick: () => navigate(`/quotations?policy_id=${reviewFormData._policyId}&client_id=${reviewFormData.client_id}&amount=${Number(reviewFormData.final_premium) || Number(reviewFormData.net_premium) || 0}`),
+        },
+      });
       setReviewOpen(false);
       fetchData();
     } catch (e: any) { toast.error(e.message || "Save failed"); }
