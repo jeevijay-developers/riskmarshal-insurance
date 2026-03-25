@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { DashboardLayout } from "@/components/DashboardLayout";
+import { useSetPageTitle } from "@/contexts/PageTitleContext";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { RenewalWidget } from "@/components/dashboard/RenewalWidget";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
