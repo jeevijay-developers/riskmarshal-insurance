@@ -170,8 +170,10 @@ const Leads = () => {
 
   const getProfileName = (id: string | null) => profiles.find((p) => p.id === id)?.full_name || "—";
 
+  useSetPageTitle("Leads");
+
   return (
-    <DashboardLayout title="Leads">
+    <>
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
