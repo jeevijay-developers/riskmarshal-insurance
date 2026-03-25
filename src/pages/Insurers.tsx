@@ -89,8 +89,10 @@ const Insurers = () => {
     fetchInsurers();
   };
 
+  useSetPageTitle("Insurers");
+
   return (
-    <DashboardLayout title="Insurers">
+    <>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="relative w-72">
