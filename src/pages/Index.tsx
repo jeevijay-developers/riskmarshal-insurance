@@ -110,9 +110,8 @@ const Index = () => {
           <RenewalWidget />
         </div>
 
-        {isAdmin && <IntermediaryTable />}
-      </div>
-    </DashboardLayout>
+      {isAdmin && <IntermediaryTable />}
+    </div>
   );
 };
 
