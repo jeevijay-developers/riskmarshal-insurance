@@ -25,6 +25,7 @@ const adminItems = [
   { title: "Insurers", url: "/insurers", icon: Building2 },
   { title: "Commissions", url: "/commissions", icon: DollarSign },
   { title: "Reports", url: "/reports", icon: BarChart3 },
+  { title: "Staff", url: "/staff", icon: UserCog },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
