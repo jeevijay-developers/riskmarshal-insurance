@@ -93,7 +93,20 @@ const Renewals = () => {
       .update({ renewal_status: status as Policy["renewal_status"] })
       .eq("id", policy.id);
     if (error) toast.error("Failed to update status");
-    else { toast.success(`Renewal status updated to ${statusLabel[status]}`); fetchData(); }
+    else { 
+      toast.success(`Renewal status updated to ${statusLabel[status]}`); 
+      
+      if (status === "reminder_sent") {
+        toast.info("Sending reminder email...");
+        const { error: fnErr } = await supabase.functions.invoke("send-renewal-reminder", {
+          body: { policyId: policy.id }
+        });
+        if (fnErr) toast.error("Failed to send reminder email");
+        else toast.success("Reminder email sent successfully");
+      }
+      
+      fetchData(); 
+    }
     setConfirmOpen(false);
     setConfirmAction(null);
   };

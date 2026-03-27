@@ -117,15 +117,19 @@ const Policies = () => {
     setFormOpen(true);
   };
 
-  const uploadDocument = async (policyId: string): Promise<string | null> => {
-    if (!docFile) return null;
-    setUploading(true);
-    const ext = docFile.name.split(".").pop();
-    const path = `${policyId}/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("policy-documents").upload(path, docFile);
-    setUploading(false);
-    if (error) { toast.error("Document upload failed"); return null; }
-    return path;
+  const uploadToImageKit = async (file: File, policyId: string): Promise<string | null> => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("fileName", `${policyId}_${Date.now()}.${file.name.split(".").pop()}`);
+      formData.append("folder", "/policy-documents");
+      const { data, error } = await supabase.functions.invoke("imagekit-upload", { body: formData });
+      if (error || data?.error) { toast.error("Document upload failed"); return null; }
+      return data.url as string;
+    } catch {
+      toast.error("Document upload failed");
+      return null;
+    }
   };
 
   const handleSave = async () => {
@@ -144,7 +148,7 @@ const Policies = () => {
         status: formData.status as Policy["status"],
       };
       if (editingPolicy) {
-        const docUrl = await uploadDocument(editingPolicy.id);
+        const docUrl = docFile ? await uploadToImageKit(docFile, editingPolicy.id) : null;
         const updatePayload = docUrl ? { ...payload, original_document_url: docUrl } : payload;
         const { error } = await supabase.from("policies").update(updatePayload).eq("id", editingPolicy.id);
         if (error) throw error;
@@ -153,7 +157,7 @@ const Policies = () => {
         const { data, error } = await supabase.from("policies").insert({ ...payload, intermediary_id: profileId }).select().single();
         if (error) throw error;
         if (docFile && data) {
-          const docUrl = await uploadDocument(data.id);
+          const docUrl = await uploadToImageKit(docFile, data.id);
           if (docUrl) await supabase.from("policies").update({ original_document_url: docUrl }).eq("id", data.id);
         }
         toast.success("Policy created successfully", {
@@ -185,13 +189,17 @@ const Policies = () => {
     setExtractedData(null);
 
     try {
-      // Step 0: Uploading
-      const ext = uploadFile.name.split(".").pop();
+      // Step 0: Upload to ImageKit
       const tempId = crypto.randomUUID();
-      const path = `${tempId}/${Date.now()}.${ext}`;
-      
-      const { error: uploadErr } = await supabase.storage.from("policy-documents").upload(path, uploadFile);
-      if (uploadErr) throw new Error("Upload failed: " + uploadErr.message);
+      const ikForm = new FormData();
+      ikForm.append("file", uploadFile);
+      ikForm.append("fileName", `${tempId}_${uploadFile.name}`);
+      ikForm.append("folder", "/policy-documents");
+
+      const { data: ikData, error: ikErr } = await supabase.functions.invoke("imagekit-upload", { body: ikForm });
+      if (ikErr || ikData?.error) throw new Error("Upload failed: " + (ikData?.error || ikErr?.message));
+
+      const documentUrl = ikData.url as string;
       toast.info("Document uploaded, starting AI analysis...");
 
       // Step 1: AI analyzing
@@ -200,11 +208,11 @@ const Policies = () => {
       // Create a placeholder policy to store extracted data
       const { data: newPolicy, error: createErr } = await supabase.from("policies").insert({
         policy_number: "EXTRACTING-" + Date.now(),
-        client_id: clients[0]?.id || profileId, // temp placeholder
+        client_id: clients[0]?.id || profileId,
         intermediary_id: profileId,
         start_date: new Date().toISOString().split("T")[0],
         end_date: new Date(Date.now() + 365 * 86400000).toISOString().split("T")[0],
-        original_document_url: path,
+        original_document_url: documentUrl,
         status: "active" as const,
       }).select().single();
 
@@ -215,7 +223,7 @@ const Policies = () => {
       toast.info("AI is extracting policy fields...");
 
       const { data: extractResult, error: extractErr } = await supabase.functions.invoke("extract-policy-data", {
-        body: { policyId: newPolicy.id, documentPath: path },
+        body: { policyId: newPolicy.id, documentUrl },
       });
 
       if (extractErr) throw new Error("Extraction failed");
@@ -223,7 +231,7 @@ const Policies = () => {
       // Step 3: Done
       setExtractionStep(3);
       toast.success("Data extracted successfully! Review the fields below.");
-      setExtractedData({ ...extractResult.data, _policyId: newPolicy.id, _documentPath: path });
+      setExtractedData({ ...extractResult.data, _policyId: newPolicy.id });
 
       setTimeout(() => {
         setUploadExtractOpen(false);
@@ -358,7 +366,7 @@ const Policies = () => {
     toast.info("Extracting data from document...");
     try {
       const { data, error } = await supabase.functions.invoke("extract-policy-data", {
-        body: { policyId: policy.id, documentPath: policy.original_document_url },
+        body: { policyId: policy.id, documentUrl: policy.original_document_url },
       });
       if (error) throw error;
       toast.success("Data extracted successfully");

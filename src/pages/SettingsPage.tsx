@@ -8,9 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Eye } from "lucide-react";
+import { Plus, Eye, Key } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface UserWithRole {
   id: string;
@@ -41,6 +42,10 @@ const SettingsPage = () => {
   const [viewOpen, setViewOpen] = useState(false);
   const [viewingUser, setViewingUser] = useState<UserWithRole | null>(null);
   const [saving, setSaving] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [changePasswordLoading, setChangePasswordLoading] = useState(false);
+  const { role } = useAuth();
+  const isAdmin = role === "super_admin";
 
   const [formData, setFormData] = useState({
     full_name: "", email: "", password: "", role: "intermediary",
@@ -102,9 +107,48 @@ const SettingsPage = () => {
     } finally { setSaving(false); }
   };
 
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    setChangePasswordLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast.success("Password updated successfully");
+      setNewPassword("");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to update password");
+    } finally {
+      setChangePasswordLoading(false);
+    }
+  };
+
   return (
     <DashboardLayout title="Settings & User Management">
       <div className="space-y-6">
+        <Card className="border-border/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Key className="h-4 w-4 text-muted-foreground" />
+              Change Password
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-end gap-3 max-w-sm">
+              <div className="space-y-2 flex-1">
+                <Label>New Password</Label>
+                <Input type="password" placeholder="Min 6 characters" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+              </div>
+              <Button onClick={handleChangePassword} disabled={changePasswordLoading || !newPassword}>
+                {changePasswordLoading ? "Updating..." : "Update"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {isAdmin && (
         <Card className="border-border/50">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -157,6 +201,7 @@ const SettingsPage = () => {
             </Table>
           </CardContent>
         </Card>
+        )}
       </div>
 
       {/* Add User Dialog */}

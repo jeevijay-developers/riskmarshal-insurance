@@ -112,10 +112,24 @@ const Quotations = () => {
         const { error } = await supabase.from("quotations").update(payload).eq("id", editingItem.id);
         if (error) throw error;
         toast.success("Quotation updated");
+        
+        if (formData.sent_via === "email") {
+          toast.info("Sending quotation email...");
+          const { error: fnErr } = await supabase.functions.invoke("send-quotation", { body: { quotationId: editingItem.id }});
+          if (fnErr) toast.error("Failed to send email");
+          else toast.success("Email sent successfully");
+        }
       } else {
-        const { error } = await supabase.from("quotations").insert({ ...payload, intermediary_id: profileId, sent_at: new Date().toISOString() });
+        const { data, error } = await supabase.from("quotations").insert({ ...payload, intermediary_id: profileId, sent_at: new Date().toISOString() }).select().single();
         if (error) throw error;
         toast.success("Quotation created");
+
+        if (formData.sent_via === "email" && data) {
+          toast.info("Sending quotation email...");
+          const { error: fnErr } = await supabase.functions.invoke("send-quotation", { body: { quotationId: data.id }});
+          if (fnErr) toast.error("Failed to send email");
+          else toast.success("Email sent successfully");
+        }
       }
       setFormOpen(false);
       fetchData();
