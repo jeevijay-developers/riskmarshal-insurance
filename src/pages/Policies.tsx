@@ -33,6 +33,41 @@ const statusColor: Record<string, string> = {
   cancelled: "bg-muted text-muted-foreground",
 };
 
+const POLICY_TYPES = [
+  // Motor
+  { id: "TWP - EV", name: "TWP - EV", category: "Motor" },
+  { id: "TWP - Non-EV", name: "TWP - Non-EV", category: "Motor" },
+  { id: "PCP", name: "PCP", category: "Motor" },
+  { id: "CVI", name: "CVI", category: "Motor" },
+  { id: "PCV", name: "PCV", category: "Motor" },
+  { id: "Misc D", name: "Misc D", category: "Motor" },
+  // Non-Motor
+  { id: "Fire", name: "Fire", category: "Non-Motor" },
+  { id: "Burglary", name: "Burglary", category: "Non-Motor" },
+  { id: "Package - Traclus", name: "Package - Traclus", category: "Non-Motor" },
+  { id: "Package - MSME", name: "Package - MSME", category: "Non-Motor" },
+  { id: "Package - Jewellers", name: "Package - Jewellers", category: "Non-Motor" },
+  { id: "CAR/CPM/EAR", name: "CAR/CPM/EAR", category: "Non-Motor" },
+  { id: "WC", name: "WC", category: "Non-Motor" },
+  { id: "Liability (PL/CGL)", name: "Liability (PL/CGL)", category: "Non-Motor" },
+  { id: "GPA", name: "GPA", category: "Non-Motor" },
+  { id: "CHI", name: "CHI", category: "Non-Motor" },
+  // Health
+  { id: "Retail Health", name: "Retail Health", category: "Health" },
+  { id: "Personal Accident", name: "Personal Accident", category: "Health" },
+  // Life
+  { id: "GIL", name: "GIL", category: "Life" },
+  { id: "Term Plan", name: "Term Plan", category: "Life" },
+  { id: "Gratuity", name: "Gratuity", category: "Life" },
+];
+
+const CATEGORY_ORDER: Record<string, number> = {
+  "Motor": 0,
+  "Non-Motor": 1,
+  "Health": 2,
+  "Life": 3,
+};
+
 const Policies = () => {
   const navigate = useNavigate();
   const { profileId, role } = useAuth();
@@ -87,7 +122,7 @@ const Policies = () => {
 
       if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
 
-      const parts = trimmed.match(/^(\d{1,2})[\/-.](\d{1,2})[\/-.](\d{2,4})$/);
+      const parts = trimmed.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);
       if (parts) {
         const day = parts[1].padStart(2, "0");
         const month = parts[2].padStart(2, "0");
@@ -135,10 +170,35 @@ const Policies = () => {
 
   useEffect(() => { fetchData(); }, []);
 
-  const policyTypes = useMemo(() => {
+  const existingPolicyTypes = useMemo(() => {
     const types = new Set(policies.map((p) => p.policy_type));
     return Array.from(types).sort();
   }, [policies]);
+
+  const groupedPolicyTypes = useMemo(() => {
+    const groups: Record<string, { id: string; name: string }[]> = {};
+    
+    // Use the predefined list
+    POLICY_TYPES.forEach(pt => {
+      if (!groups[pt.category]) groups[pt.category] = [];
+      groups[pt.category].push({ id: pt.id, name: pt.name });
+    });
+
+    // Add any "Other" types found in policies
+    const knownIds = new Set(POLICY_TYPES.map(pt => pt.id));
+    const others = existingPolicyTypes.filter(t => t && !knownIds.has(t));
+    
+    if (others.length > 0) {
+      groups["Other"] = others.map(t => ({ 
+        id: t, 
+        name: t.charAt(0).toUpperCase() + t.slice(1) 
+      }));
+    }
+
+    return Object.entries(groups)
+      .sort((a, b) => (CATEGORY_ORDER[a[0]] ?? 99) - (CATEGORY_ORDER[b[0]] ?? 99))
+      .map(([category, items]) => ({ category, items }));
+  }, [existingPolicyTypes]);
 
   const filteredPolicies = useMemo(() => {
     return policies.filter((p) => {
@@ -712,12 +772,23 @@ const Policies = () => {
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
-            {policyTypes.length > 1 && (
+            {existingPolicyTypes.length > 0 && (
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger className="w-36"><SelectValue placeholder="Type" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
-                  {policyTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  {groupedPolicyTypes.map(({ category, items }) => (
+                    <div key={category}>
+                      <div className="px-2 py-1 text-[10px] font-bold text-muted-foreground uppercase bg-muted/30 pointer-events-none mb-1">
+                        {category}
+                      </div>
+                      {items.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.name}
+                        </SelectItem>
+                      ))}
+                    </div>
+                  ))}
                 </SelectContent>
               </Select>
             )}
@@ -839,12 +910,18 @@ const Policies = () => {
                   <Select value={uploadPolicyType} onValueChange={setUploadPolicyType}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="motor">Motor</SelectItem>
-                      <SelectItem value="health">Health</SelectItem>
-                      <SelectItem value="life">Life</SelectItem>
-                      <SelectItem value="property">Property</SelectItem>
-                      <SelectItem value="travel">Travel</SelectItem>
-                      <SelectItem value="general">General</SelectItem>
+                      {groupedPolicyTypes.map(({ category, items }) => (
+                        <div key={category}>
+                          <div className="px-2 py-1 text-[10px] font-bold text-muted-foreground uppercase bg-muted/30 pointer-events-none mb-1">
+                            {category}
+                          </div>
+                          {items.map((item) => (
+                            <SelectItem key={item.id} value={item.id}>
+                              {item.name}
+                            </SelectItem>
+                          ))}
+                        </div>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -910,9 +987,29 @@ const Policies = () => {
                   <Label>Policy Number</Label>
                   <Input disabled={!reviewEditMode} value={reviewFormData.policy_number || ""} onChange={(e) => setReviewFormData({ ...reviewFormData, policy_number: e.target.value })} />
                 </div>
-                <div className="space-y-2">
+                 <div className="space-y-2">
                   <Label>Policy Type</Label>
-                  <Input disabled={!reviewEditMode} value={reviewFormData.policy_type || ""} onChange={(e) => setReviewFormData({ ...reviewFormData, policy_type: e.target.value })} />
+                  <Select 
+                    disabled={!reviewEditMode} 
+                    value={reviewFormData.policy_type || ""} 
+                    onValueChange={(v) => setReviewFormData({ ...reviewFormData, policy_type: v })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {groupedPolicyTypes.map(({ category, items }) => (
+                        <div key={category}>
+                          <div className="px-2 py-1 text-[10px] font-bold text-muted-foreground uppercase bg-muted/30 pointer-events-none mb-1">
+                            {category}
+                          </div>
+                          {items.map((item) => (
+                            <SelectItem key={item.id} value={item.id}>
+                              {item.name}
+                            </SelectItem>
+                          ))}
+                        </div>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -1085,9 +1182,18 @@ const Policies = () => {
                 <Select value={formData.policy_type} onValueChange={(v) => setFormData({ ...formData, policy_type: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="general">General</SelectItem><SelectItem value="health">Health</SelectItem>
-                    <SelectItem value="motor">Motor</SelectItem><SelectItem value="life">Life</SelectItem>
-                    <SelectItem value="property">Property</SelectItem><SelectItem value="travel">Travel</SelectItem>
+                    {groupedPolicyTypes.map(({ category, items }) => (
+                      <div key={category}>
+                        <div className="px-2 py-1 text-[10px] font-bold text-muted-foreground uppercase bg-muted/30 pointer-events-none mb-1">
+                          {category}
+                        </div>
+                        {items.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>
+                            {item.name}
+                          </SelectItem>
+                        ))}
+                      </div>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
