@@ -42,9 +42,9 @@ export function RevenueChart() {
         <CardTitle className="text-sm font-semibold">Monthly Revenue</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[250px]">
+        <div className="h-[200px] md:h-[250px] lg:h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} barSize={32}>
+            <BarChart data={data} barSize={24}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis dataKey="month" tick={{ className: "fill-muted-foreground", fontSize: 12 }} axisLine={false} tickLine={false} />
               <YAxis
