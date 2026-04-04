@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ResponsiveSearchBar } from "@/components/ResponsiveSearchBar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Plus, Search, Pencil, Trash2, Eye, Upload, FileDown, ChevronDown, Edit3, CheckCircle, AlertCircle, ChevronRight, Send, Loader2, PartyPopper } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Upload, FileDown, ChevronDown, Edit3, CheckCircle, AlertCircle, ChevronRight, Send, Loader2, PartyPopper } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -951,12 +952,12 @@ const Policies = () => {
   return (
     <>
       <div className="space-y-4">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="relative w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search by policy # or client..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-            </div>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 md:gap-4">
+          <ResponsiveSearchBar
+            value={searchTerm}
+            onValueChange={setSearchTerm}
+            placeholder="Search by policy # or client..."
+          >
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-36"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
@@ -987,8 +988,8 @@ const Policies = () => {
                 </SelectContent>
               </Select>
             )}
-          </div>
-          <div className="flex gap-2">
+          </ResponsiveSearchBar>
+          <div className="flex w-full lg:w-auto flex-wrap items-center justify-end gap-2">
               <Button variant="outline" className="gap-2" onClick={() => {
                 setUploadFile(null);
                 setUploadError(null);
@@ -1053,7 +1054,7 @@ const Policies = () => {
 
       {/* Upload & Extract Dialog */}
       <Dialog open={uploadExtractOpen} onOpenChange={(open) => { if (!open && extractionStep > 0 && extractionStep < 3) return; setUploadExtractOpen(open); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full sm:max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto dashboard-scrollbarless">
           <DialogHeader>
             <DialogTitle>Upload Policy & Extract Data</DialogTitle>
             <DialogDescription>Select details, upload a policy document, then review and edit extracted fields</DialogDescription>
@@ -1164,7 +1165,7 @@ const Policies = () => {
 
       {/* Review Extracted Data Dialog */}
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
-        <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full sm:max-w-3xl max-h-[calc(100vh-2rem)] overflow-y-auto dashboard-scrollbarless">
           <DialogHeader className="flex flex-row items-start justify-between gap-4">
             <div>
               <DialogTitle>Review Extracted Data</DialogTitle>

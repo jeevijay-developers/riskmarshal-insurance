@@ -115,6 +115,19 @@
   .glass-card {
     @apply bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg;
   }
+
+  .dashboard-scrollbarless,
+  .dashboard-scrollbarless * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .dashboard-scrollbarless::-webkit-scrollbar,
+  .dashboard-scrollbarless *::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
 }
 
 @keyframes indeterminate {

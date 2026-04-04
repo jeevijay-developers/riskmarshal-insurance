@@ -4,12 +4,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ResponsiveSearchBar } from "@/components/ResponsiveSearchBar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Pencil, Trash2, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -152,12 +153,12 @@ const Commissions = () => {
   return (
     <>
       <div className="space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="relative w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search commissions..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
-            </div>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
+          <ResponsiveSearchBar
+            value={search}
+            onValueChange={setSearch}
+            placeholder="Search commissions..."
+          >
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -167,8 +168,8 @@ const Commissions = () => {
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-          <Button className="gap-2" onClick={openAdd}><Plus className="h-4 w-4" /> Add Commission</Button>
+          </ResponsiveSearchBar>
+          <Button className="gap-2 self-end md:self-auto" onClick={openAdd}><Plus className="h-4 w-4" /> Add Commission</Button>
         </div>
         <Card className="border-border/50">
           <CardContent className="p-0">

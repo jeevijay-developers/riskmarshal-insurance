@@ -3,6 +3,7 @@ import { useSetPageTitle } from "@/contexts/PageTitleContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ResponsiveSearchBar } from "@/components/ResponsiveSearchBar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -11,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Search, Eye, Bell, CheckCircle } from "lucide-react";
+import { Eye, Bell, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -130,12 +131,12 @@ const Renewals = () => {
   return (
     <>
       <div className="space-y-4">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="relative w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search renewals..." className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-            </div>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
+          <ResponsiveSearchBar
+            value={searchTerm}
+            onValueChange={setSearchTerm}
+            placeholder="Search renewals..."
+          >
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-44"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
@@ -151,7 +152,7 @@ const Renewals = () => {
                 <SelectItem value="lapsed">Lapsed</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </ResponsiveSearchBar>
         </div>
 
         <Card className="border-border/50">

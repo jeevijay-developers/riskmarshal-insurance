@@ -107,19 +107,19 @@ export function IntermediaryTable() {
 
   return (
     <Card className="border-border/50">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between flex-wrap gap-2">
+      <CardHeader className="pb-2 md:pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <CardTitle className="text-sm font-semibold">Intermediary Performance</CardTitle>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <div className="flex items-center gap-1.5">
               <Label className="text-xs text-muted-foreground whitespace-nowrap">From</Label>
-              <Input type="date" className="h-7 text-xs w-32" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+              <Input type="date" className="h-8 sm:h-9 text-xs w-24 sm:w-28 md:w-32" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
             </div>
             <div className="flex items-center gap-1.5">
               <Label className="text-xs text-muted-foreground whitespace-nowrap">To</Label>
-              <Input type="date" className="h-7 text-xs w-32" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+              <Input type="date" className="h-8 sm:h-9 text-xs w-24 sm:w-28 md:w-32" value={toDate} onChange={(e) => setToDate(e.target.value)} />
             </div>
-            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={handleThisMonth}>
+            <Button variant="outline" size="sm" className="h-8 sm:h-9 text-xs" onClick={handleThisMonth}>
               This Month
             </Button>
           </div>

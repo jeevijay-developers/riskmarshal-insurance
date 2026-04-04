@@ -70,7 +70,7 @@ export function RenewalWidget() {
           <Badge variant="secondary" className="text-xs">{renewals.length}</Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2.5 sm:space-y-3">
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading...</p>
         ) : renewals.length === 0 ? (
@@ -79,17 +79,17 @@ export function RenewalWidget() {
           renewals.map((renewal) => (
             <div
               key={renewal.id}
-              className="flex items-center justify-between p-3 rounded-md bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+              className="flex items-center justify-between gap-2 p-2.5 sm:p-3 rounded-md bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
             >
               <div className="space-y-1">
                 <p className="text-sm font-medium text-foreground">{renewal.clientName}</p>
                 <p className="text-xs text-muted-foreground">{renewal.policyNumber}</p>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-foreground">{renewal.premium}</span>
+              <div className="flex items-center gap-2 sm:gap-3">
+                <span className="text-xs sm:text-sm font-medium text-foreground">{renewal.premium}</span>
                 <Badge
                   variant="outline"
-                  className={cn("text-[10px] px-2 py-0.5", getUrgencyColor(renewal.daysLeft))}
+                  className={cn("text-[10px] sm:text-xs px-2 py-0.5", getUrgencyColor(renewal.daysLeft))}
                 >
                   {renewal.daysLeft}d — {getUrgencyLabel(renewal.daysLeft)}
                 </Badge>

@@ -46,12 +46,12 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border px-4 py-4">
+      <SidebarHeader className="border-b border-sidebar-border px-3 py-3 md:px-4 md:py-4">
         <div className="flex items-center">
           <img
             src={logo}
             alt="RiskMarshall"
-            className={`${collapsed ? "h-8 w-8" : "h-10 w-auto"} shrink-0 object-contain dark:brightness-110 transition-all`}
+            className={`${collapsed ? "h-7 w-7 md:h-8 md:w-8" : "h-9 md:h-10 w-auto"} shrink-0 object-contain dark:brightness-110 transition-all`}
           />
         </div>
       </SidebarHeader>
@@ -100,7 +100,7 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-3">
+      <SidebarFooter className="border-t border-sidebar-border p-2 md:p-3">
         {!collapsed && user && (
           <div className="px-2 pb-2">
             <p className="text-xs font-medium text-foreground truncate">{user.email}</p>
