@@ -230,23 +230,54 @@ const Renewals = () => {
             <DialogDescription>Policy renewal information</DialogDescription>
           </DialogHeader>
           {viewingItem && (
-            <div className="space-y-3 py-2">
-              <div><Label className="text-muted-foreground text-xs">Client</Label><p className="font-medium">{viewingItem.clients?.full_name || "—"}</p></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label className="text-muted-foreground text-xs">Policy Number</Label><p className="font-mono">{viewingItem.policy_number}</p></div>
-                <div><Label className="text-muted-foreground text-xs">Type</Label><p className="capitalize">{viewingItem.policy_type}</p></div>
+            <div className="space-y-4 py-2">
+              <div className="space-y-1">
+                <Label className="text-muted-foreground text-xs block">Client</Label>
+                <p className="font-medium leading-6">{viewingItem.clients?.full_name || "—"}</p>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label className="text-muted-foreground text-xs">Insurer</Label><p>{viewingItem.insurers?.name || "—"}</p></div>
-                <div><Label className="text-muted-foreground text-xs">Premium</Label><p className="font-medium">{formatCurrency(viewingItem.premium_amount)}</p></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs block">Policy Number</Label>
+                  <p className="font-mono leading-6">{viewingItem.policy_number}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs block">Type</Label>
+                  <p className="capitalize leading-6">{viewingItem.policy_type}</p>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label className="text-muted-foreground text-xs">Start Date</Label><p>{viewingItem.start_date}</p></div>
-                <div><Label className="text-muted-foreground text-xs">End Date</Label><p>{viewingItem.end_date}</p></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs block">Insurer</Label>
+                  <p className="leading-6">{viewingItem.insurers?.name || "—"}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs block">Premium</Label>
+                  <p className="font-medium leading-6">{formatCurrency(viewingItem.premium_amount)}</p>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label className="text-muted-foreground text-xs">Days Left</Label><p className={(viewingItem as any).daysLeft <= 7 ? "text-destructive font-semibold" : ""}>{(viewingItem as any).daysLeft <= 0 ? "Expired" : `${(viewingItem as any).daysLeft} days`}</p></div>
-                <div><Label className="text-muted-foreground text-xs">Renewal Status</Label><Badge variant="outline" className={statusColor[viewingItem.renewal_status]}>{statusLabel[viewingItem.renewal_status]}</Badge></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs block">Start Date</Label>
+                  <p className="leading-6">{viewingItem.start_date}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs block">End Date</Label>
+                  <p className="leading-6">{viewingItem.end_date}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs block">Days Left</Label>
+                  <p className={`leading-6 ${(viewingItem as any).daysLeft <= 7 ? "text-destructive font-semibold" : ""}`}>
+                    {(viewingItem as any).daysLeft <= 0 ? "Expired" : `${(viewingItem as any).daysLeft} days`}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs block">Renewal Status</Label>
+                  <Badge variant="outline" className={`w-fit ${statusColor[viewingItem.renewal_status]}`}>
+                    {statusLabel[viewingItem.renewal_status]}
+                  </Badge>
+                </div>
               </div>
             </div>
           )}

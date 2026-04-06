@@ -419,21 +419,47 @@ const Quotations = () => {
             <DialogDescription>Viewing quotation information</DialogDescription>
           </DialogHeader>
           {viewingItem && (
-            <div className="space-y-3 py-2">
-              <div><Label className="text-muted-foreground text-xs">Client</Label><p className="font-medium">{viewingItem.clients?.full_name || "—"}</p></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label className="text-muted-foreground text-xs">Policy</Label><p className="font-mono">{viewingItem.policies?.policy_number || "—"}</p></div>
-                <div><Label className="text-muted-foreground text-xs">Amount</Label><p className="font-medium">{formatCurrency(viewingItem.amount)}</p></div>
+            <div className="space-y-4 py-2">
+              <div className="space-y-1">
+                <Label className="text-muted-foreground text-xs block">Client</Label>
+                <p className="font-medium leading-6">{viewingItem.clients?.full_name || "—"}</p>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label className="text-muted-foreground text-xs">Sent Via</Label><p className="capitalize">{viewingItem.sent_via || "—"}</p></div>
-                <div><Label className="text-muted-foreground text-xs">Sent At</Label><p>{viewingItem.sent_at ? new Date(viewingItem.sent_at).toLocaleDateString() : "—"}</p></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs block">Policy</Label>
+                  <p className="font-mono leading-6">{viewingItem.policies?.policy_number || "—"}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs block">Amount</Label>
+                  <p className="font-medium leading-6">{formatCurrency(viewingItem.amount)}</p>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label className="text-muted-foreground text-xs">Payment Status</Label><Badge variant="outline" className={paymentColor[viewingItem.payment_status]}>{paymentLabel[viewingItem.payment_status]}</Badge></div>
-                <div><Label className="text-muted-foreground text-xs">Alert Count</Label><p>{viewingItem.alert_count}</p></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs block">Sent Via</Label>
+                  <p className="capitalize leading-6">{viewingItem.sent_via || "—"}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs block">Sent At</Label>
+                  <p className="leading-6">{viewingItem.sent_at ? new Date(viewingItem.sent_at).toLocaleDateString() : "—"}</p>
+                </div>
               </div>
-              <div><Label className="text-muted-foreground text-xs">Created</Label><p className="text-sm">{new Date(viewingItem.created_at).toLocaleDateString()}</p></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs block">Payment Status</Label>
+                  <Badge variant="outline" className={`w-fit ${paymentColor[viewingItem.payment_status]}`}>
+                    {paymentLabel[viewingItem.payment_status]}
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs block">Alert Count</Label>
+                  <p className="leading-6">{viewingItem.alert_count}</p>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-muted-foreground text-xs block">Created</Label>
+                <p className="text-sm leading-6">{new Date(viewingItem.created_at).toLocaleDateString()}</p>
+              </div>
             </div>
           )}
         </DialogContent>

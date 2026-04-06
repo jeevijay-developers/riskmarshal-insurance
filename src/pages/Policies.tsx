@@ -114,7 +114,7 @@ const Policies = () => {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadClientId, setUploadClientId] = useState("");
   const [uploadInsurerId, setUploadInsurerId] = useState("");
-  const [uploadPolicyType, setUploadPolicyType] = useState("motor");
+  const [uploadPolicyType, setUploadPolicyType] = useState(POLICY_TYPES[0].id);
   const [uploadIntermediaryId, setUploadIntermediaryId] = useState("");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [reviewEditMode, setReviewEditMode] = useState(true);
@@ -217,6 +217,61 @@ const Policies = () => {
     }
 
     return "";
+  };
+
+  const resolveExtractedPolicyType = (value: unknown): string => {
+    if (typeof value !== "string") return "";
+    const raw = value.trim();
+    if (!raw) return "";
+
+    const normalize = (input: string) => input.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    const exactMatch = POLICY_TYPES.find((type) => type.id === raw);
+    if (exactMatch) return exactMatch.id;
+
+    const normalizedInput = normalize(raw);
+    const normalizedMatch = POLICY_TYPES.find(
+      (type) => normalize(type.id) === normalizedInput || normalize(type.name) === normalizedInput
+    );
+    if (normalizedMatch) return normalizedMatch.id;
+
+    const aliasMap: Record<string, string> = {
+      privatecarpackage: "PCP",
+      privatecarpackagepolicy: "PCP",
+      comprehensive: "PCP",
+      comprehensivepolicy: "PCP",
+      thirdparty: "TWP - Non-EV",
+      thirdpartypolicy: "TWP - Non-EV",
+      evthirdparty: "TWP - EV",
+      electricthirdparty: "TWP - EV",
+      privatecarevpackage: "TWP - EV",
+      twpnonev: "TWP - Non-EV",
+      twpev: "TWP - EV",
+    };
+    if (aliasMap[normalizedInput]) return aliasMap[normalizedInput];
+
+    const containsMatch = POLICY_TYPES.find((type) => {
+      const normalizedType = normalize(type.id);
+      return normalizedInput.includes(normalizedType) || normalizedType.includes(normalizedInput);
+    });
+    if (containsMatch) return containsMatch.id;
+
+    if (normalizedInput.includes("thirdparty")) {
+      return normalizedInput.includes("ev") || normalizedInput.includes("electric") ? "TWP - EV" : "TWP - Non-EV";
+    }
+
+    if (normalizedInput.includes("privatecar") && normalizedInput.includes("package")) {
+      return "PCP";
+    }
+
+    const categoryDefaultMap: Record<string, string> = {
+      motor: "PCP",
+      nonmotor: "Fire",
+      health: "Retail Health",
+      life: "GIL",
+    };
+
+    return categoryDefaultMap[normalizedInput] || "";
   };
 
   const [formData, setFormData] = useState({
@@ -415,7 +470,7 @@ const Policies = () => {
         policy_number: "EXTRACTING-" + Date.now(),
         client_id: uploadClientId,
         insurer_id: uploadInsurerId || null,
-        policy_type: uploadPolicyType || "motor",
+        policy_type: uploadPolicyType || POLICY_TYPES[0].id,
         intermediary_id: selectedIntermediaryId,
         start_date: new Date().toISOString().split("T")[0],
         end_date: new Date(Date.now() + 365 * 86400000).toISOString().split("T")[0],
@@ -504,7 +559,11 @@ const Policies = () => {
       _policyId: policyId,
       // Policy Info
       policy_number: pd.policyNumber || "",
-      policy_type: pd.policyType || pd.coverType || defaults?.policyType || "general",
+      policy_type:
+        resolveExtractedPolicyType(pd.policyType) ||
+        resolveExtractedPolicyType(pd.coverType) ||
+        resolveExtractedPolicyType(defaults?.policyType) ||
+        POLICY_TYPES[0].id,
       start_date: toDateInputValue(pd.periodFrom || pd.insuranceStartDate || ""),
       end_date: toDateInputValue(pd.periodTo || pd.insuranceEndDate || ""),
       invoice_number: pd.invoiceNumber || "",
@@ -564,8 +623,8 @@ const Policies = () => {
       // Previous policy
       prev_insurer: pd.previousPolicy?.insurer || "",
       prev_policy_number: pd.previousPolicy?.policyNumber || "",
-      prev_valid_from: pd.previousPolicy?.validFrom || "",
-      prev_valid_to: pd.previousPolicy?.validTo || "",
+      prev_valid_from: toDateInputValue(pd.previousPolicy?.validFrom || ""),
+      prev_valid_to: toDateInputValue(pd.previousPolicy?.validTo || ""),
       // Payment
       payment_mode: pd.paymentDetails?.mode || "",
       // Dropdowns
@@ -939,8 +998,9 @@ const Policies = () => {
             {renderField("Insurer", id.name)}
             {renderField("Branch", id.branchAddress)}
             {renderField("Helpline", id.helplineNumber)}
-            {renderField("Agent Name", ad.name)}
-            {renderField("Agent Code", ad.code)}
+            {renderField("Intermediary Name", ad.name)}
+            {renderField("Intermediary Code", ad.code)}
+            {renderField("Intermediary Contact", ad.contact)}
           </div>
         </TabsContent>
       </Tabs>
@@ -1355,16 +1415,16 @@ const Policies = () => {
                 <CardContent className="px-3 pb-3 grid grid-cols-2 gap-3">
                   <div className="space-y-1"><Label className="text-xs">Insurer</Label><Input disabled={!reviewEditMode} value={reviewFormData.prev_insurer || ""} onChange={(e) => setReviewFormData({ ...reviewFormData, prev_insurer: e.target.value })} /></div>
                   <div className="space-y-1"><Label className="text-xs">Policy No</Label><Input disabled={!reviewEditMode} value={reviewFormData.prev_policy_number || ""} onChange={(e) => setReviewFormData({ ...reviewFormData, prev_policy_number: e.target.value })} /></div>
-                  <div className="space-y-1"><Label className="text-xs">Valid From</Label><Input disabled={!reviewEditMode} value={reviewFormData.prev_valid_from || ""} onChange={(e) => setReviewFormData({ ...reviewFormData, prev_valid_from: e.target.value })} /></div>
-                  <div className="space-y-1"><Label className="text-xs">Valid To</Label><Input disabled={!reviewEditMode} value={reviewFormData.prev_valid_to || ""} onChange={(e) => setReviewFormData({ ...reviewFormData, prev_valid_to: e.target.value })} /></div>
+                  <div className="space-y-1"><Label className="text-xs">Valid From</Label><Input disabled={!reviewEditMode} type="date" value={reviewFormData.prev_valid_from || ""} onChange={(e) => setReviewFormData({ ...reviewFormData, prev_valid_from: e.target.value })} /></div>
+                  <div className="space-y-1"><Label className="text-xs">Valid To</Label><Input disabled={!reviewEditMode} type="date" value={reviewFormData.prev_valid_to || ""} onChange={(e) => setReviewFormData({ ...reviewFormData, prev_valid_to: e.target.value })} /></div>
                 </CardContent>
               </Card>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2"><Label>Agent Name</Label><Input disabled={!reviewEditMode} value={reviewFormData.agent_name || ""} onChange={(e) => setReviewFormData({ ...reviewFormData, agent_name: e.target.value })} /></div>
-                <div className="space-y-2"><Label>Agent Code</Label><Input disabled={!reviewEditMode} value={reviewFormData.agent_code || ""} onChange={(e) => setReviewFormData({ ...reviewFormData, agent_code: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Intermediary Name</Label><Input disabled={!reviewEditMode} value={reviewFormData.agent_name || ""} onChange={(e) => setReviewFormData({ ...reviewFormData, agent_name: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Intermediary Code</Label><Input disabled={!reviewEditMode} value={reviewFormData.agent_code || ""} onChange={(e) => setReviewFormData({ ...reviewFormData, agent_code: e.target.value })} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2"><Label>Agent Contact</Label><Input disabled={!reviewEditMode} value={reviewFormData.agent_contact || ""} onChange={(e) => setReviewFormData({ ...reviewFormData, agent_contact: e.target.value })} /></div>
+                <div className="space-y-2"><Label>Intermediary Contact</Label><Input disabled={!reviewEditMode} value={reviewFormData.agent_contact || ""} onChange={(e) => setReviewFormData({ ...reviewFormData, agent_contact: e.target.value })} /></div>
                 <div className="space-y-2"><Label>Payment Mode</Label><Input disabled={!reviewEditMode} value={reviewFormData.payment_mode || ""} onChange={(e) => setReviewFormData({ ...reviewFormData, payment_mode: e.target.value })} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
