@@ -158,7 +158,7 @@ const Policies = () => {
 
   const toFriendlyAuthMessage = (message: string): string => {
     if (!message) return "Something went wrong";
-    if (/missing authorization header|invalid jwt|jwt expired|unauthorized/i.test(message)) {
+    if (/missing authorization header|invalid jwt|jwt expired|unauthorized|no api key found/i.test(message)) {
       return "Your session has expired. Please sign in again and retry.";
     }
     return message;
@@ -431,8 +431,18 @@ const Policies = () => {
   const handleDelete = async () => {
     if (!deletingPolicy) return;
     const { error } = await supabase.from("policies").delete().eq("id", deletingPolicy.id);
-    if (error) toast.error("Failed to delete");
-    else { toast.success("Policy deleted"); fetchData(); }
+    if (error) {
+      if (/foreign key constraint|violates foreign key constraint/i.test(error.message || "")) {
+        toast.error("This policy is linked to related records and cannot be deleted yet. Please refresh and try again.");
+      }
+      const friendly = toFriendlyAuthMessage(error.message || "Failed to delete policy");
+      if (!/foreign key constraint|violates foreign key constraint/i.test(error.message || "")) {
+        toast.error(friendly);
+      }
+    } else {
+      toast.success("Policy deleted");
+      fetchData();
+    }
     setDeleteOpen(false);
     setDeletingPolicy(null);
   };

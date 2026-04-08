@@ -131,11 +131,12 @@ const StaffPage = () => {
     setSaving(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
+      if (!session?.access_token) throw new Error("Not authenticated");
 
       const res = await supabase.functions.invoke("create-user", {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
+          authorization: `Bearer ${session.access_token}`,
         },
         body: {
           email: formData.email.trim(),
@@ -145,7 +146,30 @@ const StaffPage = () => {
         },
       });
 
-      if (res.error) throw new Error(res.error.message || "Failed to create user");
+      if (res.error) {
+        const responseLike = (res.error as { context?: Response })?.context;
+        if (responseLike && typeof responseLike.clone === "function") {
+          try {
+            const rawText = await responseLike.clone().text();
+            if (rawText) {
+              try {
+                const parsed = JSON.parse(rawText);
+                if (typeof parsed?.error === "string") {
+                  throw new Error(parsed.error);
+                }
+                if (typeof parsed?.message === "string") {
+                  throw new Error(parsed.message);
+                }
+              } catch {
+                throw new Error(rawText);
+              }
+            }
+          } catch {
+            // Fall back to default SDK error message.
+          }
+        }
+        throw new Error(res.error.message || "Failed to create user");
+      }
 
       const responseData = res.data;
       if (responseData?.error) throw new Error(responseData.error);

@@ -12,8 +12,9 @@ import { format } from "date-fns";
 const Reports = () => {
   useSetPageTitle("Reports Central");
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingFormat, setLoadingFormat] = useState<"pdf" | "excel" | "csv" | null>(null);
   const [reportType, setReportType] = useState<string>("premium_commission");
+
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
 
@@ -101,7 +102,6 @@ const Reports = () => {
   };
 
   const fetchReportData = async () => {
-    setIsLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
@@ -117,10 +117,14 @@ const Reports = () => {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
-      if (error) throw new Error(error.message || "Failed to fetch report data");
+      if (error) {
+        // If the edge function returns an error structure inside `data` (like { error: 'message' })
+        // supabase.functions.invoke might catch the HTTP error code, but let's be thorough.
+        throw new Error(error.message || "Failed to fetch report data");
+      }
       
       const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
-      if (parsedData.error) throw new Error(parsedData.error);
+      if (parsedData?.error) throw new Error(parsedData.error);
       
       if (!parsedData || parsedData.length === 0) {
          toast.info("No data found for this date range.");
@@ -128,41 +132,46 @@ const Reports = () => {
       }
       return parsedData;
     } catch (err: any) {
-      console.error(err);
+      console.error("fetchReportData error:", err);
       toast.error(err.message || "An error occurred");
       return null;
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleExport = async (formatType: "pdf" | "excel" | "csv") => {
-    const rawData = await fetchReportData();
-    if (!rawData) return;
+    if (loadingFormat) return;
+    setLoadingFormat(formatType);
     
-    const flatData = transformData(rawData, reportType);
-    const titleMap: any = {
-      premium_commission: "Premium & Commission Report",
-      renewals: "Upcoming Renewals Report",
-      performance: "Intermediary Performance Report",
-      policy_status: "Policy Status Overview"
-    };
+    try {
+      const rawData = await fetchReportData();
+      if (!rawData) return;
+      
+      const flatData = transformData(rawData, reportType);
+      const titleMap: any = {
+        premium_commission: "Premium & Commission Report",
+        renewals: "Upcoming Renewals Report",
+        performance: "Intermediary Performance Report",
+        policy_status: "Policy Status Overview"
+      };
 
-    const fileName = `${reportType}_report_${format(new Date(), "yyyyMMdd")}`;
-    const reportTitle = titleMap[reportType];
+      const fileName = `${reportType}_report_${format(new Date(), "yyyyMMdd")}`;
+      const reportTitle = titleMap[reportType] || "Report";
 
-    switch (formatType) {
-      case "csv":
-        downloadCSV(flatData, fileName);
-        break;
-      case "excel":
-        downloadExcel(flatData, fileName);
-        break;
-      case "pdf":
-        downloadPDF(flatData, getPdfColumns(reportType), fileName, reportTitle);
-        break;
+      switch (formatType) {
+        case "csv":
+          downloadCSV(flatData, fileName);
+          break;
+        case "excel":
+          downloadExcel(flatData, fileName);
+          break;
+        case "pdf":
+          downloadPDF(flatData, getPdfColumns(reportType), fileName, reportTitle);
+          break;
+      }
+      toast.success(`Successfully exported ${fileName}.${formatType} with ${flatData.length} records!`);
+    } finally {
+      setLoadingFormat(null);
     }
-    toast.success(`Successfully exported ${fileName}.${formatType} with ${flatData.length} records!`);
   };
 
   return (
@@ -221,28 +230,28 @@ const Reports = () => {
             </span>
             <Button
               variant="outline"
-              disabled={isLoading}
+              disabled={loadingFormat !== null}
               onClick={() => handleExport("pdf")}
               className="w-full md:w-auto"
             >
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4 text-red-500" />}
+              {loadingFormat === "pdf" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4 text-red-500" />}
               Export PDF
             </Button>
             <Button
               variant="outline"
-              disabled={isLoading}
+              disabled={loadingFormat !== null}
               onClick={() => handleExport("excel")}
               className="w-full md:w-auto"
             >
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileSpreadsheet className="mr-2 h-4 w-4 text-green-600" />}
+              {loadingFormat === "excel" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileSpreadsheet className="mr-2 h-4 w-4 text-green-600" />}
               Export Excel
             </Button>
             <Button
-              disabled={isLoading}
+              disabled={loadingFormat !== null}
               onClick={() => handleExport("csv")}
               className="w-full md:w-auto"
             >
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TableIcon className="mr-2 h-4 w-4" />}
+              {loadingFormat === "csv" ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TableIcon className="mr-2 h-4 w-4" />}
               Export CSV
             </Button>
           </div>

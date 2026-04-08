@@ -277,6 +277,45 @@ export type Database = {
         }
         Relationships: []
       }
+      organizations: {
+        Row: {
+          address: string | null
+          api_config: Json | null
+          city: string | null
+          company_name: string
+          gst_number: string | null
+          id: string
+          pincode: string | null
+          state: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          address?: string | null
+          api_config?: Json | null
+          city?: string | null
+          company_name?: string
+          gst_number?: string | null
+          id?: string
+          pincode?: string | null
+          state?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          address?: string | null
+          api_config?: Json | null
+          city?: string | null
+          company_name?: string
+          gst_number?: string | null
+          id?: string
+          pincode?: string | null
+          state?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       policies: {
         Row: {
           client_id: string
@@ -374,6 +413,7 @@ export type Database = {
           id: string
           intermediary_code: string | null
           is_active: boolean
+          notification_preferences: Json | null
           parent_intermediary_id: string | null
           phone: string | null
           updated_at: string
@@ -386,6 +426,7 @@ export type Database = {
           id?: string
           intermediary_code?: string | null
           is_active?: boolean
+          notification_preferences?: Json | null
           parent_intermediary_id?: string | null
           phone?: string | null
           updated_at?: string
@@ -398,6 +439,7 @@ export type Database = {
           id?: string
           intermediary_code?: string | null
           is_active?: boolean
+          notification_preferences?: Json | null
           parent_intermediary_id?: string | null
           phone?: string | null
           updated_at?: string

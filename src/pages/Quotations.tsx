@@ -425,11 +425,11 @@ const Quotations = () => {
                 <p className="font-medium leading-6">{viewingItem.clients?.full_name || "—"}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0">
                   <Label className="text-muted-foreground text-xs block">Policy</Label>
-                  <p className="font-mono leading-6">{viewingItem.policies?.policy_number || "—"}</p>
+                  <p className="font-mono leading-6 break-all">{viewingItem.policies?.policy_number || "—"}</p>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0">
                   <Label className="text-muted-foreground text-xs block">Amount</Label>
                   <p className="font-medium leading-6">{formatCurrency(viewingItem.amount)}</p>
                 </div>

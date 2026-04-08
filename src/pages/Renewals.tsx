@@ -236,11 +236,11 @@ const Renewals = () => {
                 <p className="font-medium leading-6">{viewingItem.clients?.full_name || "—"}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0">
                   <Label className="text-muted-foreground text-xs block">Policy Number</Label>
-                  <p className="font-mono leading-6">{viewingItem.policy_number}</p>
+                  <p className="font-mono leading-6 break-all">{viewingItem.policy_number}</p>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0">
                   <Label className="text-muted-foreground text-xs block">Type</Label>
                   <p className="capitalize leading-6">{viewingItem.policy_type}</p>
                 </div>
