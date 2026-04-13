@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Eye, EyeOff, Trash2, X } from "lucide-react";
+import { Plus, Eye, EyeOff, Trash2, X, Pencil, Ban, CheckCircle, Phone, UserSquare, Briefcase, Copy, Download, ClipboardCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -52,11 +52,17 @@ const StaffPage = () => {
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
   const [viewingUser, setViewingUser] = useState<UserWithRole | null>(null);
+  const [editingUser, setEditingUser] = useState<UserWithRole | null>(null);
+  const [statusTargetUser, setStatusTargetUser] = useState<UserWithRole | null>(null);
   const [viewingAssociations, setViewingAssociations] = useState<InsurerAssociation[]>([]);
   const [saving, setSaving] = useState(false);
   const [insurers, setInsurers] = useState<Insurer[]>([]);
   const [showPassword, setShowPassword] = useState(false);
+  const [credentialsOpen, setCredentialsOpen] = useState(false);
+  const [createdCredentials, setCreatedCredentials] = useState<{ email: string; password: string; name: string } | null>(null);
 
   const [formData, setFormData] = useState({
     full_name: "", email: "", password: "", role: "intermediary",
@@ -133,48 +139,28 @@ const StaffPage = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error("Not authenticated");
 
-      const res = await supabase.functions.invoke("create-user", {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const res = await fetch(`${supabaseUrl}/functions/v1/create-user`, {
+        method: "POST",
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+          "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
-        body: {
+        body: JSON.stringify({
           email: formData.email.trim(),
           password: formData.password,
           full_name: formData.full_name.trim(),
           role: formData.role,
-        },
+        }),
       });
 
-      if (res.error) {
-        const responseLike = (res.error as { context?: Response })?.context;
-        if (responseLike && typeof responseLike.clone === "function") {
-          try {
-            const rawText = await responseLike.clone().text();
-            if (rawText) {
-              try {
-                const parsed = JSON.parse(rawText);
-                if (typeof parsed?.error === "string") {
-                  throw new Error(parsed.error);
-                }
-                if (typeof parsed?.message === "string") {
-                  throw new Error(parsed.message);
-                }
-              } catch {
-                throw new Error(rawText);
-              }
-            }
-          } catch {
-            // Fall back to default SDK error message.
-          }
-        }
-        throw new Error(res.error.message || "Failed to create user");
+      const responseData = await res.json();
+      if (!res.ok || responseData.error) {
+        throw new Error(responseData.error || `Request failed with status ${res.status}`);
       }
 
-      const responseData = res.data;
-      if (responseData?.error) throw new Error(responseData.error);
-
-      const newUserId = responseData?.user_id;
+      const newUserId = responseData.user_id;
 
       // Update profile with intermediary-specific fields
       if (formData.role === "intermediary" && newUserId) {
@@ -210,7 +196,13 @@ const StaffPage = () => {
       }
 
       toast.success(`User "${formData.full_name}" created successfully`);
+      setCreatedCredentials({
+        email: formData.email.trim(),
+        password: formData.password,
+        name: formData.full_name.trim(),
+      });
       setAddOpen(false);
+      setCredentialsOpen(true);
       setFormData({ full_name: "", email: "", password: "", role: "intermediary", phone: "", intermediary_code: "" });
       setFormAssociations([]);
       setShowPassword(false);
@@ -239,6 +231,155 @@ const StaffPage = () => {
         })));
       }
     }
+  };
+
+  const handleEditClick = async (u: UserWithRole) => {
+    setEditingUser(u);
+    setFormData({
+      full_name: u.full_name || "",
+      email: u.email || "",
+      password: "", // Password is not editable here directly due to auth restrictions
+      role: u.role || "intermediary",
+      phone: u.phone || "",
+      intermediary_code: u.intermediary_code || "",
+    });
+    
+    if (u.role === "intermediary") {
+      const { data } = await supabase
+        .from("intermediary_insurers")
+        .select("insurer_id, commission_rate")
+        .eq("intermediary_id", u.id);
+      if (data) {
+        setFormAssociations(data.map((d: any) => ({
+          insurer_id: d.insurer_id,
+          commission_rate: d.commission_rate.toString(),
+        })));
+      } else {
+        setFormAssociations([]);
+      }
+    } else {
+      setFormAssociations([]);
+    }
+    
+    setEditOpen(true);
+  };
+
+  const handleUpdateUser = async () => {
+    if (!editingUser) return;
+    if (!formData.full_name.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    if (formData.role === "intermediary") {
+      if (!formData.intermediary_code.trim()) {
+        toast.error("Intermediary code is required");
+        return;
+      }
+      const validAssociations = formAssociations.filter(a => a.insurer_id && a.commission_rate);
+      if (validAssociations.length === 0) {
+        toast.error("At least one insurer association with commission rate is required");
+        return;
+      }
+    }
+
+    setSaving(true);
+    try {
+      // Update profile
+      const { error: profileErr } = await supabase
+        .from("profiles")
+        .update({
+          full_name: formData.full_name.trim(),
+          intermediary_code: formData.role === "intermediary" ? formData.intermediary_code.trim() : null,
+          phone: formData.phone.trim(),
+        })
+        .eq("id", editingUser.id);
+      
+      if (profileErr) throw profileErr;
+
+      // Update role if changed
+      if (formData.role !== editingUser.role) {
+        await supabase.from("user_roles").update({ role: formData.role }).eq("user_id", editingUser.id);
+      }
+
+      // Update associations if intermediary
+      await supabase.from("intermediary_insurers").delete().eq("intermediary_id", editingUser.id);
+      
+      if (formData.role === "intermediary") {
+        const validAssociations = formAssociations.filter(a => a.insurer_id && a.commission_rate);
+        if (validAssociations.length > 0) {
+          const records = validAssociations.map(a => ({
+            intermediary_id: editingUser.id,
+            insurer_id: a.insurer_id,
+            commission_rate: Number(a.commission_rate) || 0,
+          }));
+          const { error: assocErr } = await supabase.from("intermediary_insurers").insert(records);
+          if (assocErr) {
+            console.error("Failed to update insurer associations:", assocErr);
+            toast.warning("Profile updated but some insurer associations failed");
+          }
+        }
+      }
+
+      toast.success(`User "${formData.full_name}" updated successfully`);
+      setEditOpen(false);
+      fetchUsers();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to update user");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleConfirmToggleClick = (user: UserWithRole) => {
+    setStatusTargetUser(user);
+    setStatusConfirmOpen(true);
+  };
+
+  const handleToggleStatus = async () => {
+    if (!statusTargetUser) return;
+    
+    const newStatus = !statusTargetUser.is_active;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_active: newStatus })
+        .eq("id", statusTargetUser.id);
+      
+      if (error) throw error;
+      toast.success(`User successfully ${newStatus ? 'activated' : 'deactivated'}`);
+      fetchUsers();
+      setStatusConfirmOpen(false);
+      setStatusTargetUser(null);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to update status");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    await navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard");
+  };
+
+  const copyAllCredentials = async () => {
+    if (!createdCredentials) return;
+    const text = `Account Credentials\nName: ${createdCredentials.name}\nEmail: ${createdCredentials.email}\nPassword: ${createdCredentials.password}`;
+    await navigator.clipboard.writeText(text);
+    toast.success("All credentials copied");
+  };
+
+  const downloadCredentials = () => {
+    if (!createdCredentials) return;
+    const text = `Account Credentials\n${"=".repeat(30)}\nName: ${createdCredentials.name}\nEmail: ${createdCredentials.email}\nPassword: ${createdCredentials.password}\n\nGenerated: ${new Date().toLocaleString()}`;
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `credentials_${createdCredentials.email.split("@")[0]}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   useSetPageTitle("Staff Management");
@@ -294,9 +435,17 @@ const StaffPage = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleViewUser(u)}>
-                          <Eye className="h-3.5 w-3.5" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => handleViewUser(u)} title="View User">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-info hover:text-info" onClick={() => handleEditClick(u)} title="Edit User">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className={u.is_active ? "h-8 w-8 text-destructive hover:text-destructive" : "h-8 w-8 text-success hover:text-success"} onClick={() => handleConfirmToggleClick(u)} title={u.is_active ? "Deactivate User" : "Activate User"}>
+                            {u.is_active ? <Ban className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -497,6 +646,252 @@ const StaffPage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={editOpen} onOpenChange={(open) => {
+        setEditOpen(open);
+        if (!open) setEditingUser(null);
+      }}>
+        <DialogContent className="sm:max-w-[425px] overflow-y-auto max-h-[85vh]">
+          <DialogHeader>
+            <DialogTitle>Edit User Profile</DialogTitle>
+            <DialogDescription>
+              Update the details for {editingUser?.full_name}.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-full-name">Full Name</Label>
+              <Input
+                id="edit-full-name"
+                value={formData.full_name}
+                onChange={(e) =>
+                  setFormData({ ...formData, full_name: e.target.value })
+                }
+                autoComplete="off"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">Phone Number</Label>
+              <div className="relative">
+                <Phone className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="edit-phone"
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
+                  className="pl-9"
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <div className="flex gap-4">
+                <div
+                  className={`w-full py-2 px-3 border rounded-md text-sm text-center ${formData.role === "staff" ? "bg-primary text-primary-foreground font-medium" : "text-muted-foreground cursor-not-allowed bg-muted"}`}
+                >
+                  <UserSquare className="mr-2 h-4 w-4 inline" />
+                  Internal Staff
+                </div>
+                <div
+                  className={`w-full py-2 px-3 border rounded-md text-sm text-center ${formData.role === "intermediary" ? "bg-primary text-primary-foreground font-medium" : "text-muted-foreground cursor-not-allowed bg-muted"}`}
+                >
+                  <Briefcase className="mr-2 h-4 w-4 inline" />
+                  Intermediary
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">User roles cannot be changed once created.</p>
+            </div>
+
+            {formData.role === "intermediary" && (
+              <div className="space-y-4 rounded-lg border p-4 bg-muted/50 mt-2">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-intermediary-code">Intermediary Code</Label>
+                  <Input
+                    id="edit-intermediary-code"
+                    value={formData.intermediary_code}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        intermediary_code: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                
+                <div className="space-y-2 pt-2 border-t mt-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Insurer Associations</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={addAssociationRow}
+                    >
+                      <Plus className="mr-1 h-3 w-3" />
+                      Add
+                    </Button>
+                  </div>
+                  
+                  {formAssociations.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-1">
+                      No insurers mapped.
+                    </p>
+                  ) : (
+                    <div className="space-y-3 mt-3 max-h-[140px] overflow-y-auto pr-1">
+                      {formAssociations.map((assoc, index) => (
+                        <div key={index} className="flex items-end gap-2 bg-background p-2 rounded-md border">
+                          <div className="grid grid-cols-2 gap-2 flex-1">
+                            <div className="space-y-1">
+                              <Label className="text-xs">Insurer <span className="text-destructive">*</span></Label>
+                              <Select
+                                value={assoc.insurer_id}
+                                onValueChange={(value) =>
+                                  updateAssociation(index, "insurer_id", value)
+                                }
+                              >
+                                <SelectTrigger className="h-8">
+                                  <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {insurers.map((ins) => (
+                                    <SelectItem key={ins.id} value={ins.id}>
+                                      {ins.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Comm. Rate % <span className="text-destructive">*</span></Label>
+                              <Input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                value={assoc.commission_rate}
+                                onChange={(e) =>
+                                  updateAssociation(index, "commission_rate", e.target.value)
+                                }
+                                className="h-8"
+                              />
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive/90 mb-[2px]"
+                            onClick={() => removeAssociationRow(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateUser} disabled={saving}>
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Target Status Confirm Dialog */}
+      <Dialog open={statusConfirmOpen} onOpenChange={setStatusConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Status Change</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to {statusTargetUser?.is_active ? 'deactivate' : 'activate'} {statusTargetUser?.full_name}?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setStatusConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant={statusTargetUser?.is_active ? "destructive" : "default"}
+              onClick={handleToggleStatus}
+              disabled={saving}
+            >
+              {saving ? "Processing..." : "Confirm"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Credentials Dialog */}
+      <Dialog open={credentialsOpen} onOpenChange={(open) => {
+        setCredentialsOpen(open);
+        if (!open) setCreatedCredentials(null);
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>User Created Successfully</DialogTitle>
+            <DialogDescription>
+              Save these credentials. The password cannot be retrieved later.
+            </DialogDescription>
+          </DialogHeader>
+          {createdCredentials && (
+            <div className="space-y-4 py-2">
+              <div className="space-y-1">
+                <Label className="text-muted-foreground text-xs">Name</Label>
+                <p className="font-medium text-sm">{createdCredentials.name}</p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-muted-foreground text-xs">Email</Label>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 rounded bg-muted px-3 py-2 text-sm font-mono break-all">
+                    {createdCredentials.email}
+                  </code>
+                  <Button variant="outline" size="icon" className="shrink-0" onClick={() => copyToClipboard(createdCredentials.email)}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-muted-foreground text-xs">Password</Label>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 rounded bg-muted px-3 py-2 text-sm font-mono break-all">
+                    {createdCredentials.password}
+                  </code>
+                  <Button variant="outline" size="icon" className="shrink-0" onClick={() => copyToClipboard(createdCredentials.password)}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" className="gap-2" onClick={copyAllCredentials}>
+              <ClipboardCheck className="h-4 w-4" /> Copy All
+            </Button>
+            <Button variant="outline" className="gap-2" onClick={downloadCredentials}>
+              <Download className="h-4 w-4" /> Download .txt
+            </Button>
+            <Button onClick={() => { setCredentialsOpen(false); setCreatedCredentials(null); }}>
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </>
   );
 };
